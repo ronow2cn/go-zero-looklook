@@ -2,6 +2,7 @@ package homestayOrder
 
 import (
 	"context"
+	"looklook/common/ctxdata"
 
 	"looklook/app/order/cmd/api/internal/svc"
 	"looklook/app/order/cmd/api/internal/types"
@@ -9,7 +10,7 @@ import (
 	"looklook/common/xerr"
 
 	"github.com/pkg/errors"
-	"github.com/tal-tech/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/logx"
 )
 
 type CreateHomestayOrderLogic struct {
@@ -29,12 +30,14 @@ func NewCreateHomestayOrderLogic(ctx context.Context, svcCtx *svc.ServiceContext
 //民宿下单
 func (l *CreateHomestayOrderLogic) CreateHomestayOrder(req types.CreateHomestayOrderReq) (*types.CreateHomestayOrderResp, error) {
 
+	userId := ctxdata.GetUidFromCtx(l.ctx)
+
 	resp, err := l.svcCtx.OrderRpc.CreateHomestayOrder(l.ctx, &order.CreateHomestayOrderReq{
 		HomestayId:    req.HomestayId,
 		IsFood:        req.IsFood,
 		LiveStartTime: req.LiveStartTime,
 		LiveEndTime:   req.LiveEndTime,
-		UserId:        1,
+		UserId:        userId,
 		LivePeopleNum: req.LivePeopleNum,
 		Remark:        req.Remark,
 	})

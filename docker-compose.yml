@@ -1,162 +1,70 @@
 version: '3'
 
+######## 启动本项目之前，要先启动本项目依赖的环境docker-compose-env.yml #######
 services:
 
-  ########################################    非业务   ########################################
-
-  #jaeger链路追踪
-  jager_collector:
-    image: jaegertracing/jaeger-collector:1.18
-    container_name: jager_collector
+  #网关nginx
+  nginx-gateway:
+    image: nginx:1.21.5
+    container_name: nginx-gateway
     restart: always
+    privileged: true
     environment:
-      - SPAN_STORAGE_TYPE=elasticsearch
-      - ES_SERVER_URLS=http://elasticsearch:9200
-      - ES_USERNAME=elastic
-      - ES_PASSWORD=elasticseven666
-      - LOG_LEVEL=debug
-    networks:
-      - looklook_net
+      - TZ=Asia/Shanghai
     ports:
-      - "14269"
-      - "14268:14268"
-      - "14267"
-      - "14250:14250"
-      - "9411:9411"
-
-  jager_agent:
-    image: jaegertracing/jaeger-agent:1.18
-    container_name: jager_agent
-    restart: always
-    environment:
-      - REPORTER_GRPC_HOST_PORT=jager_collector:14250
-      - LOG_LEVEL=debug
-    ports:
-      - "5775:5775/udp"
-      - "5778:5778"
-      - "6831:6831/udp"
-      - "6832:6832/udp"
+      - 8888:8081
+    volumes:
+      - ./deploy/nginx/conf.d:/etc/nginx/conf.d
+      - ./data/nginx/log:/var/log/nginx
     networks:
       - looklook_net
     depends_on:
-      - jager_collector
-
-  jaeger_query:
-    image: jaegertracing/jaeger-query:1.18
-    restart: always
-    container_name: jaeger_query
-    environment:
-      - SPAN_STORAGE_TYPE=elasticsearch
-      - ES_SERVER_URLS=http://elasticsearch:9200
-      - ES_USERNAME=elastic
-      - ES_PASSWORD=elasticseven666
-      - LOG_LEVEL=debug
-    ports:
-      - 16686:16686
-    networks:
-      - looklook_net
-
-  #prometheus监控
-  prometheus:
-    image: prom/prometheus:v2.28.1
-    container_name: prometheus
-    volumes:
-      - ./data/prometheus/server/prometheus.yml:/etc/prometheus/prometheus.yml
-      - ./data/prometheus/data:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-    restart: always
-    user: root
-    ports:
-      - 9090:9090
-    networks:
-      - looklook_net
-
-  #查看prometheus监控数据
-  grafana:
-        image: grafana/grafana:8.0.6
-        container_name: grafana
-        hostname: grafana
-        restart: always
-        volumes:
-            - ./data/grafana/data:/var/lib/grafana
-        ports:
-            - "3001:3000"
-        networks:
-            - looklook_net
-
-  #搜集kafka业务日志、存储prometheus监控数据
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.13.4
-    container_name: elasticsearch
-    environment:
-      - discovery.type=single-node
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-    volumes:
-      - ./data/elasticsearch/data:/usr/share/elasticsearch/data
-    restart: always
-    ports:
-    - 9200:9200
-    - 9300:9300
-    networks:
-      - looklook_net
-
-  #查看elasticsearch数据
-  kibana:
-    image: docker.elastic.co/kibana/kibana:7.13.4
-    container_name: kibana
-    environment:
-      - elasticsearch.hosts=http://elasticsearch:9200
-    restart: always
-    networks:
-      - looklook_net
-    depends_on:
-      - "elasticsearch"
-    ports:
-      - "5601:5601"
-
-  #收集业务数据
-  filebeat:
-    image: elastic/filebeat:7.13.4
-    container_name: filebeat
-    user: root
-    restart: always
-    volumes:
-      - /var/lib/docker/containers:/var/lib/docker/containers
-    networks:
-      - looklook_net
-
-  #kafka的服务注册发现
-  zookeeper:
-    image: wurstmeister/zookeeper
-    container_name: zookeeper
-    # always restart
-    restart: always
-    ports:
-      - 2181:2181
-    networks:
-      - looklook_net
-
-  #消息队列
-  kafka:
-    image: wurstmeister/kafka
-    container_name: kafka
-    ports:
-      - 9092:9092
-    # host ip
-    environment:
-      KAFKA_ADVERTISED_HOST_NAME: kafka
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-    # always restart
-    restart: always
-    volumes:
-      - ./data/kafka/docker.sock:/var/run/docker.sock
-    networks:
-      - looklook_net
+      - identity-api
+      - usercenter-api
+      - travel-api
+      - order-api
+      - payment-api
 
 
   ########################################    业务   ########################################
+
+  #总后台api , admin只有一个api聚合，不走nginx-gateway网关了，直接暴露端口访问就好了
+  admin-api:
+    image: cosmtrek/air:latest
+    container_name: admin-api
+    environment:
+      # 时区上海
+      TZ: Asia/Shanghai
+      GOPROXY: https://goproxy.cn,direct
+    working_dir: /go/src/github.com/looklook/admin
+    ports:
+      - 7080:8080
+      - 7888:8888
+      - 7081:8081
+    volumes:
+      - .:/go/src/github.com/looklook
+    privileged: true
+    restart: always
+    networks:
+      - looklook_net
+    depends_on:
+      - banner-rpc
+
+  #为后台api提供数据的测试服务
+  banner-rpc:
+    image: cosmtrek/air:latest
+    container_name: banner-rpc
+    environment:
+      # 时区上海
+      TZ: Asia/Shanghai
+      GOPROXY: https://goproxy.cn,direct
+    working_dir: /go/src/github.com/looklook/app/banner/cmd/rpc
+    volumes:
+      - .:/go/src/github.com/looklook
+    privileged: true
+    restart: always
+    networks:
+      - looklook_net
 
   #认证服务、颁发token
   identity-rpc:
@@ -166,8 +74,6 @@ services:
       # 时区上海
       TZ: Asia/Shanghai
       GOPROXY: https://goproxy.cn,direct
-    ports:
-      - 9001:9001
     working_dir: /go/src/github.com/looklook/app/identity/cmd/rpc
     volumes:
       -  .:/go/src/github.com/looklook
@@ -184,8 +90,6 @@ services:
       # 时区上海
       TZ: Asia/Shanghai
       GOPROXY: https://goproxy.cn,direct
-    ports:
-      - 8001:8001
     working_dir: /go/src/github.com/looklook/app/identity/cmd/api
     volumes:
       -  .:/go/src/github.com/looklook
@@ -204,8 +108,6 @@ services:
       # 时区上海
       TZ: Asia/Shanghai
       GOPROXY: https://goproxy.cn,direct
-    ports:
-      - 9002:9002
     working_dir: /go/src/github.com/looklook/app/usercenter/cmd/rpc
     volumes:
       -  .:/go/src/github.com/looklook
@@ -224,8 +126,6 @@ services:
       # 时区上海
       TZ: Asia/Shanghai
       GOPROXY: https://goproxy.cn,direct
-    ports:
-      - 8002:8002
     working_dir: /go/src/github.com/looklook/app/usercenter/cmd/api
     volumes:
       -  .:/go/src/github.com/looklook
@@ -245,8 +145,6 @@ services:
       # 时区上海
       TZ: Asia/Shanghai
       GOPROXY: https://goproxy.cn,direct
-    ports:
-      - 9003:9003
     working_dir: /go/src/github.com/looklook/app/travel/cmd/rpc
     volumes:
       -  .:/go/src/github.com/looklook
@@ -263,8 +161,6 @@ services:
       # 时区上海
       TZ: Asia/Shanghai
       GOPROXY: https://goproxy.cn,direct
-    ports:
-      - 8003:8003
     working_dir: /go/src/github.com/looklook/app/travel/cmd/api
     volumes:
       -  .:/go/src/github.com/looklook
@@ -274,7 +170,6 @@ services:
       - looklook_net
     depends_on:
       - usercenter-rpc
-      - order-rpc
       - travel-rpc
 
   #订单服务rpc
@@ -285,8 +180,6 @@ services:
       # 时区上海
       TZ: Asia/Shanghai
       GOPROXY: https://goproxy.cn,direct
-    ports:
-      - 9004:9004
     working_dir: /go/src/github.com/looklook/app/order/cmd/rpc
     volumes:
       -  .:/go/src/github.com/looklook
@@ -306,9 +199,6 @@ services:
       # 时区上海
       TZ: Asia/Shanghai
       GOPROXY: https://goproxy.cn,direct
-    ports:
-      - 8004:8004
-      - 8491:9091
     working_dir: /go/src/github.com/looklook/app/order/cmd/api
     volumes:
       -  .:/go/src/github.com/looklook
@@ -328,8 +218,6 @@ services:
       # 时区上海
       TZ: Asia/Shanghai
       GOPROXY: https://goproxy.cn,direct
-    ports:
-      - 7004:7004
     working_dir: /go/src/github.com/looklook/app/order/cmd/mq
     volumes:
       -  .:/go/src/github.com/looklook
@@ -350,8 +238,6 @@ services:
       # 时区上海
       TZ: Asia/Shanghai
       GOPROXY: https://goproxy.cn,direct
-    ports:
-      - 9005:9005
     working_dir: /go/src/github.com/looklook/app/payment/cmd/rpc
     volumes:
       - .:/go/src/github.com/looklook
@@ -370,8 +256,6 @@ services:
       # 时区上海
       TZ: Asia/Shanghai
       GOPROXY: https://goproxy.cn,direct
-    ports:
-      - 8005:8005
     working_dir: /go/src/github.com/looklook/app/payment/cmd/api
     volumes:
       -  .:/go/src/github.com/looklook
@@ -392,8 +276,6 @@ services:
       # 时区上海
       TZ: Asia/Shanghai
       GOPROXY: https://goproxy.cn,direct
-    ports:
-      - 9006:9006
     working_dir: /go/src/github.com/looklook/app/mqueue/cmd/rpc
     volumes:
       -  .:/go/src/github.com/looklook
@@ -410,8 +292,6 @@ services:
       # 时区上海
       TZ: Asia/Shanghai
       GOPROXY: https://goproxy.cn,direct
-    ports:
-      - 7007:7007
     working_dir: /go/src/github.com/looklook/app/message/cmd/mq
     volumes:
       -  .:/go/src/github.com/looklook
@@ -419,6 +299,7 @@ services:
     restart: always
     networks:
       - looklook_net
+
 
 
 networks:

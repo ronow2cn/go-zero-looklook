@@ -5,7 +5,7 @@ import (
 	"looklook/app/order/cmd/mq/internal/config"
 	"looklook/app/order/cmd/mq/internal/svc"
 
-	"github.com/tal-tech/go-zero/core/service"
+	"github.com/zeromicro/go-zero/core/service"
 )
 
 //返回所有消费者
@@ -20,6 +20,7 @@ func Mqs(c config.Config) []service.Service {
 	services = append(services, KqMqs(c, ctx, svcContext)...)
 	//asynq ： 延迟队列、定时任务
 	services = append(services, AsynqMqs(c, ctx, svcContext)...)
+	//other mq ....
 
 	return services
 }

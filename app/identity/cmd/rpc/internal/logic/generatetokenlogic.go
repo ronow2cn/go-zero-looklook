@@ -11,9 +11,9 @@ import (
 	"looklook/common/globalkey"
 	"looklook/common/xerr"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/pkg/errors"
-	"github.com/tal-tech/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/logx"
 )
 
 var ErrGenerateTokenError = xerr.NewErrMsg("生成token失败")
@@ -42,7 +42,7 @@ func (l *GenerateTokenLogic) GenerateToken(in *pb.GenerateTokenReq) (*pb.Generat
 		return nil, errors.Wrapf(ErrGenerateTokenError, "getJwtToken err userId:%d , err:%v", in.UserId, err)
 	}
 
-	//存入redis
+	// 存入redis.
 	userTokenKey := fmt.Sprintf(globalkey.CacheUserTokenKey, in.UserId)
 	err = l.svcCtx.RedisClient.Setex(userTokenKey, accessToken, int(accessExpire))
 	if err != nil {

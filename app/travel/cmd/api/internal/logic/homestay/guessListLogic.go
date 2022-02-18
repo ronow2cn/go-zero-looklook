@@ -10,7 +10,7 @@ import (
 
 	"github.com/jinzhu/copier"
 	"github.com/pkg/errors"
-	"github.com/tal-tech/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/logx"
 )
 
 type GuessListLogic struct {
@@ -29,13 +29,13 @@ func NewGuessListLogic(ctx context.Context, svcCtx *svc.ServiceContext) GuessLis
 
 func (l *GuessListLogic) GuessList(req types.GuessListReq) (*types.GuessListResp, error) {
 
-	//@todo 先返回所有列表数据 ， 后续根据当前标签关联相同属性的民宿推荐给用户.
+	// @todo 先返回所有列表数据 ， 后续根据当前标签关联相同属性的民宿推荐给用户.
 
 	var resp []types.Homestay
 
 	list, err := l.svcCtx.HomestayModel.FindPageList(0, 5)
 	if err != nil {
-		return nil, errors.Wrapf(xerr.ErrDBError, "req : %+v , err : %v", req, err)
+		return nil, errors.Wrapf(xerr.NewErrCode(xerr.DB_ERROR), "req : %+v , err : %v", req, err)
 	}
 
 	if len(list) > 0 {

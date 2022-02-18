@@ -15,7 +15,7 @@ import (
 	"looklook/common/xerr"
 
 	"github.com/pkg/errors"
-	"github.com/tal-tech/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/logx"
 )
 
 type CreateHomestayOrderLogic struct {
@@ -91,7 +91,7 @@ func (l *CreateHomestayOrderLogic) CreateHomestayOrder(in *pb.CreateHomestayOrde
 
 	_, err = l.svcCtx.HomestayOrderModel.Insert(nil, order)
 	if err != nil {
-		return nil, errors.Wrapf(xerr.ErrDBError, "下单数据库异常 order : %+v , err: %v", order, err)
+		return nil, errors.Wrapf(xerr.NewErrCode(xerr.DB_ERROR), "下单数据库异常 order : %+v , err: %v", order, err)
 	}
 
 	//2、延迟关闭订单任务.

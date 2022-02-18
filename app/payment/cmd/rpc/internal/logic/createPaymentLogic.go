@@ -10,7 +10,7 @@ import (
 	"looklook/common/xerr"
 
 	"github.com/pkg/errors"
-	"github.com/tal-tech/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/logx"
 )
 
 type CreatePaymentLogic struct {
@@ -40,7 +40,7 @@ func (l *CreatePaymentLogic) CreatePayment(in *pb.CreatePaymentReq) (*pb.CreateP
 
 	_, err := l.svcCtx.ThirdPaymentModel.Insert(nil, data)
 	if err != nil {
-		return nil, errors.Wrapf(xerr.ErrDBError, "微信支付创建第三方流水记录失败 err:%v ,data : %+v  ", err, data)
+		return nil, errors.Wrapf(xerr.NewErrCode(xerr.DB_ERROR), "微信支付创建第三方流水记录失败 err:%v ,data : %+v  ", err, data)
 	}
 
 	return &pb.CreatePaymentResp{

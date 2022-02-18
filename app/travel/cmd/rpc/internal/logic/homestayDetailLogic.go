@@ -10,7 +10,7 @@ import (
 
 	"github.com/jinzhu/copier"
 	"github.com/pkg/errors"
-	"github.com/tal-tech/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/logx"
 )
 
 type HomestayDetailLogic struct {
@@ -32,7 +32,7 @@ func (l *HomestayDetailLogic) HomestayDetail(in *pb.HomestayDetailReq) (*pb.Home
 
 	homestay, err := l.svcCtx.HomestayModel.FindOne(in.Id)
 	if err != nil && err != model.ErrNotFound {
-		return nil, errors.Wrapf(xerr.ErrDBError, " id : %d ", in.Id)
+		return nil, errors.Wrapf(xerr.NewErrCode(xerr.DB_ERROR), " id : %d ", in.Id)
 	}
 
 	var pbHomestay pb.Homestay

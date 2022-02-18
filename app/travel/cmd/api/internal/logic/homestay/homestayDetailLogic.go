@@ -2,8 +2,6 @@ package homestay
 
 import (
 	"context"
-	"fmt"
-
 	"looklook/app/travel/cmd/api/internal/svc"
 	"looklook/app/travel/cmd/api/internal/types"
 	"looklook/app/travel/cmd/rpc/travel"
@@ -12,7 +10,7 @@ import (
 
 	"github.com/jinzhu/copier"
 	"github.com/pkg/errors"
-	"github.com/tal-tech/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/logx"
 )
 
 type HomestayDetailLogic struct {
@@ -38,12 +36,10 @@ func (l *HomestayDetailLogic) HomestayDetail(req types.HomestayDetailReq) (*type
 		return nil, errors.Wrapf(xerr.NewErrMsg("获取民宿详情信息失败"), " id : %d , err : %v ", req.Id, err)
 	}
 
-	fmt.Printf("homestay : %+v \n", homestayResp.Homestay)
-
 	var typeHomestay types.Homestay
 	if homestayResp.Homestay != nil {
 
-		//整合民宿详情
+		// 整合民宿详情
 		_ = copier.Copy(&typeHomestay, homestayResp.Homestay)
 
 		typeHomestay.FoodPrice = tool.Fen2Yuan(homestayResp.Homestay.FoodPrice)

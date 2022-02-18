@@ -2,12 +2,11 @@ package main
 
 import (
 	"flag"
-
 	"looklook/app/message/cmd/mq/internal/config"
 	"looklook/app/message/cmd/mq/internal/listen"
 
-	"github.com/tal-tech/go-zero/core/conf"
-	"github.com/tal-tech/go-zero/core/service"
+	"github.com/zeromicro/go-zero/core/conf"
+	"github.com/zeromicro/go-zero/core/service"
 )
 
 var configFile = flag.String("f", "etc/message.yaml", "Specify the config file")
@@ -17,6 +16,11 @@ func main() {
 	var c config.Config
 
 	conf.MustLoad(*configFile, &c)
+
+	//log、prometheus、trace、metricsUrl.
+	if err := c.SetUp(); err != nil {
+		panic(err)
+	}
 
 	serviceGroup := service.NewServiceGroup()
 	defer serviceGroup.Stop()

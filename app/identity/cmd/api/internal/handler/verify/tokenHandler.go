@@ -11,7 +11,7 @@ import (
 	"looklook/common/xerr"
 
 	"github.com/pkg/errors"
-	"github.com/tal-tech/go-zero/rest/httpx"
+	"github.com/zeromicro/go-zero/rest/httpx"
 )
 
 var ErrTokenExpireError = xerr.NewErrCode(xerr.TOKEN_EXPIRE_ERROR)
@@ -26,11 +26,11 @@ func TokenHandler(ctx *svc.ServiceContext) http.HandlerFunc {
 
 		l := verify.NewTokenLogic(r.Context(), ctx)
 		resp, err := l.Token(req, r)
-		if err == nil && !resp.Ok {
+		if err == nil && (resp == nil || !resp.Ok) {
 			err = errors.Wrapf(ErrTokenExpireError, "jwtAuthHandler JWT Auth no err , userId is zero , req:%+v,resp:%+v", req, resp)
 		}
 
-		XUser := "0" //ide会有警告，实际resp不会为nil
+		XUser := "0" // ide会有警告，实际resp不会为nil
 		if resp != nil {
 			XUser = fmt.Sprintf("%d", resp.UserId)
 		}

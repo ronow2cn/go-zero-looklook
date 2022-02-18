@@ -15,7 +15,7 @@ import (
 	wechat "github.com/silenceper/wechat/v2"
 	"github.com/silenceper/wechat/v2/cache"
 	miniConfig "github.com/silenceper/wechat/v2/miniprogram/config"
-	"github.com/tal-tech/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/logx"
 )
 
 //error信息.
@@ -65,7 +65,7 @@ func (l *WxMiniAuthLogic) WxMiniAuth(req types.WXMiniAuthReq) (*types.WXMiniAuth
 	}
 	if rpcRsp.UserAuth == nil || rpcRsp.UserAuth.Id == 0 {
 
-		//绑定用户
+		//绑定用户.
 
 		//小程序解密返回的数据都如下
 		mobile := userData.PhoneNumber

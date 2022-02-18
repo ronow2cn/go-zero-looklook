@@ -15,8 +15,8 @@ import (
 	"github.com/silenceper/wechat/v2/cache"
 	miniConfig "github.com/silenceper/wechat/v2/miniprogram/config"
 	"github.com/silenceper/wechat/v2/miniprogram/subscribe"
-	"github.com/tal-tech/go-zero/core/logx"
-	"github.com/tal-tech/go-zero/core/service"
+	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/service"
 )
 
 /**
@@ -35,32 +35,27 @@ func NewSendWxMiniSubMessageMq(ctx context.Context, svcCtx *svc.ServiceContext) 
 }
 
 func (l *SendWxMiniSubMessageMq) Consume(_, val string) error {
-
 	//解析数据.
 	var message kqueue.SendWxMiniSubMessage
 	if err := json.Unmarshal([]byte(val), &message); err != nil {
 		logx.WithContext(l.ctx).Error("SendWxTplMq->Consume Unmarshal err : %v , val : %s", err, val)
 		return err
 	}
-
 	//执行业务
 	if err := l.execService(message); err != nil {
 		logx.WithContext(l.ctx).Error("SendWxMiniSubMessageMq->execService  err : %v , val : %s , message:%+v", err, val, message)
 		return err
 	}
-
 	return nil
 }
 
 //执行业务
 func (l *SendWxMiniSubMessageMq) execService(message kqueue.SendWxMiniSubMessage) error {
-
 	miniprogram := wechat.NewWechat().GetMiniProgram(&miniConfig.Config{
 		AppID:     l.svcCtx.Config.WxMiniConf.AppId,
 		AppSecret: l.svcCtx.Config.WxMiniConf.Secret,
 		Cache:     cache.NewMemory(),
 	})
-
 	fmt.Printf("message :%+v \n\n", message)
 	msg := &subscribe.Message{
 		ToUser:     message.Openid,

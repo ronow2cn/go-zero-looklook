@@ -8,11 +8,11 @@ import (
 
 	"looklook/common/globalkey"
 
-	"github.com/tal-tech/go-zero/core/stores/builder"
-	"github.com/tal-tech/go-zero/core/stores/cache"
-	"github.com/tal-tech/go-zero/core/stores/sqlc"
-	"github.com/tal-tech/go-zero/core/stores/sqlx"
-	"github.com/tal-tech/go-zero/core/stringx"
+	"github.com/zeromicro/go-zero/core/stores/builder"
+	"github.com/zeromicro/go-zero/core/stores/cache"
+	"github.com/zeromicro/go-zero/core/stores/sqlc"
+	"github.com/zeromicro/go-zero/core/stores/sqlx"
+	"github.com/zeromicro/go-zero/core/stringx"
 )
 
 var (
@@ -66,11 +66,11 @@ func (m *defaultUserModel) Insert(session sqlx.Session, data *User) (sql.Result,
 	looklookUsercenterUserMobileKey := fmt.Sprintf("%s%v", cacheLooklookUsercenterUserMobilePrefix, data.Mobile)
 	return m.Exec(func(conn sqlx.SqlConn) (result sql.Result, err error) {
 
-		query := fmt.Sprintf("insert into %s (`mobile`,`nickname`) values ( ?, ?)", m.table)
+		query := fmt.Sprintf("insert into %s (`mobile`,`nickname`,`password`) values ( ?, ? , ?)", m.table)
 		if session != nil {
-			return session.Exec(query, data.Mobile, data.Nickname)
+			return session.Exec(query, data.Mobile, data.Nickname, data.Password)
 		}
-		return session.Exec(query, data.Mobile, data.Nickname)
+		return conn.Exec(query, data.Mobile, data.Nickname,data.Password)
 	}, looklookUsercenterUserIdKey, looklookUsercenterUserMobileKey)
 
 }

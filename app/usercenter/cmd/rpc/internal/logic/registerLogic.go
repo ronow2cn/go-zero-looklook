@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"looklook/common/tool"
 
 	"looklook/app/identity/cmd/rpc/identity"
 	"looklook/app/usercenter/cmd/rpc/internal/svc"
@@ -10,8 +11,8 @@ import (
 	"looklook/common/xerr"
 
 	"github.com/pkg/errors"
-	"github.com/tal-tech/go-zero/core/logx"
-	"github.com/tal-tech/go-zero/core/stores/sqlx"
+	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
 
 var ErrUserAlreadyRegisterError = xerr.NewErrMsg("该用户已被注册")
@@ -34,27 +35,29 @@ func (l *RegisterLogic) Register(in *usercenter.RegisterReq) (*usercenter.Regist
 
 	user, err := l.svcCtx.UserModel.FindOneByMobile(in.Mobile)
 	if err != nil && err != model.ErrNotFound {
-		return nil, errors.Wrapf(xerr.ErrDBError, "mobile:%s,err:%v", in.Mobile, err)
+		return nil, errors.Wrapf(xerr.NewErrCode(xerr.DB_ERROR), "mobile:%s,err:%v", in.Mobile, err)
 	}
-
 	if user != nil {
 		return nil, errors.Wrapf(ErrUserAlreadyRegisterError, "用户已经存在 mobile:%s,err:%v", in.Mobile, err)
 	}
 
 	var userId int64
-
 	if err := l.svcCtx.UserModel.Trans(func(session sqlx.Session) error {
-
 		user := new(model.User)
 		user.Mobile = in.Mobile
-		user.Nickname = in.Nickname
+		if len(user.Nickname) == 0 {
+			user.Nickname = tool.Krand(tool.KC_RAND_KIND_ALL, 8)
+		}
+		if len(in.Password) > 0 {
+			user.Password = tool.Md5ByString(in.Password)
+		}
 		insertResult, err := l.svcCtx.UserModel.Insert(session, user)
 		if err != nil {
-			return errors.Wrapf(xerr.ErrDBError, "err:%v,user:%+v", err, user)
+			return errors.Wrapf(xerr.NewErrCode(xerr.DB_ERROR), "err:%v,user:%+v", err, user)
 		}
 		lastId, err := insertResult.LastInsertId()
 		if err != nil {
-			return errors.Wrapf(xerr.ErrDBError, "insertResult.LastInsertId err:%v,user:%+v", err, user)
+			return errors.Wrapf(xerr.NewErrCode(xerr.DB_ERROR), "insertResult.LastInsertId err:%v,user:%+v", err, user)
 		}
 		userId = lastId
 
@@ -63,7 +66,7 @@ func (l *RegisterLogic) Register(in *usercenter.RegisterReq) (*usercenter.Regist
 		userAuth.AuthKey = in.AuthKey
 		userAuth.AuthType = in.AuthType
 		if _, err := l.svcCtx.UserAuthModel.Insert(session, userAuth); err != nil {
-			return errors.Wrapf(xerr.ErrDBError, "err:%v,userAuth:%v", err, userAuth)
+			return errors.Wrapf(xerr.NewErrCode(xerr.DB_ERROR), "err:%v,userAuth:%v", err, userAuth)
 		}
 		return nil
 	}); err != nil {

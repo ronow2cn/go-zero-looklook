@@ -11,7 +11,7 @@ import (
 
 	"github.com/jinzhu/copier"
 	"github.com/pkg/errors"
-	"github.com/tal-tech/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/logx"
 )
 
 type UserHomestayOrderListLogic struct {
@@ -34,7 +34,7 @@ func (l *UserHomestayOrderListLogic) UserHomestayOrderList(in *pb.UserHomestayOr
 	fmt.Printf("userId : %d \n", in.UserId)
 	list, err := l.svcCtx.HomestayOrderModel.ListByUserIdTradeState(in.LastId, in.PageSize, in.UserId, in.TraderState)
 	if err != nil && err != model.ErrNotFound {
-		return nil, errors.Wrapf(xerr.ErrDBError, "获取用户民宿订单失败 err : %v , in :%+v", err, in)
+		return nil, errors.Wrapf(xerr.NewErrCode(xerr.DB_ERROR), "获取用户民宿订单失败 err : %v , in :%+v", err, in)
 	}
 
 	var resp []*pb.HomestayOrder

@@ -11,7 +11,7 @@ import (
 	"looklook/common/xerr"
 
 	"github.com/pkg/errors"
-	"github.com/tal-tech/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/logx"
 )
 
 type LoginLogic struct {
@@ -39,13 +39,13 @@ func (l *LoginLogic) Login(in *usercenter.LoginReq) (*usercenter.LoginResp, erro
 	case model.UserAuthTypeSystem:
 		userId, err = l.loginByMobile(in.AuthKey, in.Password)
 	default:
-		return nil, xerr.ErrServerError
+		return nil, xerr.NewErrCode(xerr.SERVER_COMMON_ERROR)
 	}
 	if err != nil {
 		return nil, err
 	}
 
-	//2、生成token..
+	//2、生成token
 	resp, err := l.svcCtx.IdentityRpc.GenerateToken(l.ctx, &identity.GenerateTokenReq{
 		UserId: userId,
 	})
@@ -64,7 +64,7 @@ func (l *LoginLogic) loginByMobile(mobile, password string) (int64, error) {
 
 	user, err := l.svcCtx.UserModel.FindOneByMobile(mobile)
 	if err != nil && err != model.ErrNotFound {
-		return 0, errors.Wrapf(xerr.ErrDBError, "根据手机号查询用户信息失败，mobile:%s,err:%v", mobile, err)
+		return 0, errors.Wrapf(xerr.NewErrCode(xerr.DB_ERROR), "根据手机号查询用户信息失败，mobile:%s,err:%v", mobile, err)
 	}
 	if user == nil {
 		return 0, errors.Wrapf(ErrUserNoExistsError, "mobile:%s", mobile)

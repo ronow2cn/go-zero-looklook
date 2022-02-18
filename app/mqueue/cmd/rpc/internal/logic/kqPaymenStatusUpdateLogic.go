@@ -7,7 +7,7 @@ import (
 	"looklook/app/mqueue/cmd/rpc/pb"
 	"looklook/common/kqueue"
 
-	"github.com/tal-tech/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/logx"
 )
 
 type KqPaymenStatusUpdateLogic struct {
@@ -24,7 +24,7 @@ func NewKqPaymenStatusUpdateLogic(ctx context.Context, svcCtx *svc.ServiceContex
 	}
 }
 
-//支付流水状态变更发送到kq..
+// 支付流水状态变更发送到kq..
 func (l *KqPaymenStatusUpdateLogic) KqPaymenStatusUpdate(in *pb.KqPaymenStatusUpdateReq) (*pb.KqPaymenStatusUpdateResp, error) {
 
 	m := kqueue.ThirdPaymentUpdatePayStatusNotifyMessage{

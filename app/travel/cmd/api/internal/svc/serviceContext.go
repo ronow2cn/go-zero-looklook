@@ -1,14 +1,13 @@
 package svc
 
 import (
-	"looklook/app/order/cmd/rpc/order"
 	"looklook/app/travel/cmd/api/internal/config"
 	"looklook/app/travel/cmd/rpc/travel"
 	"looklook/app/travel/model"
 	"looklook/app/usercenter/cmd/rpc/usercenter"
 
-	"github.com/tal-tech/go-zero/core/stores/sqlx"
-	"github.com/tal-tech/go-zero/zrpc"
+	"github.com/zeromicro/go-zero/core/stores/sqlx"
+	"github.com/zeromicro/go-zero/zrpc"
 )
 
 type ServiceContext struct {
@@ -18,7 +17,6 @@ type ServiceContext struct {
 	//rpc
 	UsercenterRpc usercenter.Usercenter
 	TravelRpc     travel.Travel
-	OrderRpc      order.Order
 
 	//model
 	HomestayModel         model.HomestayModel
@@ -33,7 +31,6 @@ func NewServiceContext(c config.Config) *ServiceContext {
 
 		UsercenterRpc: usercenter.NewUsercenter(zrpc.MustNewClient(c.UsercenterRpcConf)),
 		TravelRpc:     travel.NewTravel(zrpc.MustNewClient(c.TravelRpcConf)),
-		OrderRpc:      order.NewOrder(zrpc.MustNewClient(c.OrderRpcConf)),
 
 		HomestayModel:         model.NewHomestayModel(sqlx.NewMysql(c.DB.DataSource), c.Cache),
 		HomestayActivityModel: model.NewHomestayActivityModel(sqlx.NewMysql(c.DB.DataSource), c.Cache),
